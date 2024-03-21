@@ -410,10 +410,10 @@ def update_stock_levels(hoverData, pathname):
     dff = df[df['Stock'] == ticker]
 
     if hoverData is None:
-        high = dff['High'].iloc[-1]
-        low = dff['Low'].iloc[-1]
-        open_price = dff['Open'].iloc[-1]
-        close = dff['Close'].iloc[-1]
+        high = round(dff['High'].iloc[-1], 2)
+        low = round(dff['Low'].iloc[-1], 2)
+        open_price = round(dff['Open'].iloc[-1], 2)
+        close = round(dff['Close'].iloc[-1], 2)
 
         stock_levels = [
             html.Span([html.Span(letter), html.Span(f'{price}', style={'color': 'green' if price > dff[level].iloc[-2] else 'red'})], style={"display": "flex", "gap": "5px"})
