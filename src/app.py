@@ -232,7 +232,10 @@ def update_graph(pathname, indicators, std, periods):
 
     row_heights = [0.4 / (len(indicators) + 1)] * (len(indicators) + 1)
 
-    fig = make_subplots(rows=len(indicators) + 1, cols=1, shared_xaxes=True, row_heights=row_heights, vertical_spacing=0.03)
+    fig_titles = [indicator for indicator in indicators]
+    fig_titles.insert(0, ticker)
+
+    fig = make_subplots(rows=len(indicators) + 1, cols=1, shared_xaxes=True, row_heights=row_heights, vertical_spacing=0.03, subplot_titles=fig_titles)
 
     candlestick = {
         'x': dff['Date'],
@@ -353,6 +356,8 @@ def update_graph(pathname, indicators, std, periods):
         yaxis={'showgrid': False, 'tickfont': {'color': 'gray'}},
         height=subplots_height,
     )
+
+    fig.update_annotations(font_color='gray')
 
     fig.update_layout(
         xaxis=dict(
