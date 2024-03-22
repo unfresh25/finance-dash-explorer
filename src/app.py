@@ -76,7 +76,7 @@ app.layout = html.Div([
                 },
                 placeholder="Select technical indicators..."
             ),
-        ], style={"width": "35%"}),
+        ], style={"width": "35%"}, className="technical-aside"),
 
         html.Aside([
             dcc.Input(
@@ -109,7 +109,7 @@ app.layout = html.Div([
         "justify-content": "flex-start", 
         "align-items": "flex-end",
         "gap": "15px"
-    }),
+    }, className="dropdowns-section"),
 
     html.Section([
         html.Aside([        
@@ -131,7 +131,7 @@ app.layout = html.Div([
             "border-radius": "12px",
             "border": "1px solid rgba(255, 255, 255, 0.125)",
             "margin-top": "10px",
-        }),
+        }, className="graph-aside"),
 
         html.Aside([
             html.Article([
@@ -166,9 +166,9 @@ app.layout = html.Div([
                     }
                 ),                                
             ], style={"height": "100%"}),
-        ], style={"width": "30%"}),
+        ], style={"width": "30%"}, className="info-aside"),
 
-    ], style={"display": "flex", "gap": "20px", "align-items": "flex-start"}),
+    ], style={"display": "flex", "gap": "20px", "align-items": "flex-start"}, className="graph-section"),
 
     html.Hr(),
 
@@ -177,15 +177,16 @@ app.layout = html.Div([
             html.Span("Jorge Borja S."),
             html.Span("Visualización Científica"),
             html.Span("Maestría en Estadística Aplicada")
-        ], style={"display": "flex", "flex-direction": "column"}),
+        ], style={"display": "flex", "flex-direction": "column"}, className="footer-names"),
         html.Img(src="https://www.uninorte.edu.co/o/uninorte-theme/images/uninorte/footer_un/logo.png", style={"height": "50px"})
     ], style={"display": "flex", "justify-content": "space-between", "align-items": "center"}),
 
     html.Br()  
-], style={"height": "100vh", "margin": "0 auto", "padding": "50px", "width": "90%"})
+], style={"height": "100vh", "margin": "0 auto", "padding": "50px", "width": "90%"}, className="body-section")
 
 def obv_ind(df):
     df['OBV'] = np.where(df['Close'] > df['Close'].shift(1), df['Volume'], np.where(df['Close'] < df['Close'].shift(1), -df['Volume'], 0)).cumsum()
+    df['OBV Signal'] = df['OBV'].ewm(span=12).mean()
 
     return df
 
@@ -201,6 +202,7 @@ def stoch_ind(df, window_size=5):
     df['High-Low'] = df['High'] - df['Low']
     df['%K'] = (df['Close'] - df['Low']) / df['High-Low'] * 100
     df['%D'] = df['%K'].rolling(window=window_size).mean()
+    df['Signal'] = df['%K'].ewm(span=9).mean()
 
     return df    
 
@@ -208,6 +210,7 @@ def adl_ind(df):
     df['MFM'] = ((df['Close'] - df['Low']) - (df['High'] - df['Close'])) / (df['High'] - df['Low'])
     df['ADL'] = df['MFM'] * df['Volume']
     df['A/D'] = df['ADL'].cumsum()
+    df['Signal'] = df['A/D'].ewm(span=9).mean()
 
     return df
 
@@ -259,7 +262,7 @@ def update_graph(pathname, indicators, std, periods):
         'type': 'scatter', 'mode': 'lines',
         'line': {'width': 1, 'color': colorscale[(i*2) % len(colorscale)]},
         'legendgroup': ticker,
-        'showlegend': False,
+        'showlegend': True if i == 0 else False,
         'name': f'{ticker} - bollinger bands'
     } for i, y in enumerate(bb_bands)]
 
@@ -279,11 +282,22 @@ def update_graph(pathname, indicators, std, periods):
             'type': 'scatter',
             'mode': 'lines',
             'name': 'OBV',
-            'showlegend': False,
+            'legendgroup': 'OBV',
             'line': {'color': '#6F61C0'}
         }
-
         fig.add_trace(obv_trace, row=row_counter, col=1)
+
+        obv_trace = {
+            'x': dff['Date'],
+            'y': obv['OBV Signal'],
+            'type': 'scatter',
+            'mode': 'lines',
+            'name': 'OBV Signal',
+            'legendgroup': 'OBV',
+            'line': {'color': '#D7BBF5'}
+        }
+        fig.add_trace(obv_trace, row=row_counter, col=1)
+
         fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
         fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
 
@@ -298,11 +312,22 @@ def update_graph(pathname, indicators, std, periods):
             'type': 'scatter',
             'mode': 'lines',
             'name': 'MACD',
-            'showlegend': False,
-            'line': {'color': '#0B666A'}
+            'legendgroup': 'MACD',
+            'line': {'color': '#00AD7C'}
         }
-
         fig.add_trace(macd_trace, row=row_counter, col=1)
+
+        macd_trace = {
+            'x': dff['Date'],
+            'y': macd['Signal'],
+            'type': 'scatter',
+            'mode': 'lines',
+            'name': 'MACD Signal',
+            'legendgroup': 'MACD',
+            'line': {'color': '#B5FF7D'}
+        }
+        fig.add_trace(macd_trace, row=row_counter, col=1)
+
         fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
         fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
         
@@ -316,12 +341,25 @@ def update_graph(pathname, indicators, std, periods):
             'y': so['%D'],
             'type': 'scatter',
             'mode': 'lines',
-            'name': 'Stochastic Oscillator',
-            'showlegend': False,
-            'line': {'color': '#FE6244'}
+            'name': 'SO',
+            'showlegend': True,
+            'legendgroup': 'SO',
+            'line': {'color': '#F90716'}
         }
-
         fig.add_trace(so_trace, row=row_counter, col=1)
+
+        so_trace = {
+            'x': dff['Date'],
+            'y': so['Signal'],
+            'type': 'scatter',
+            'mode': 'lines',
+            'name': 'SO Signal',
+            'showlegend': True,
+            'legendgroup': 'SO',
+            'line': {'color': '#FFCA03'}
+        }
+        fig.add_trace(so_trace, row=row_counter, col=1)
+
         fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
         fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
 
@@ -335,12 +373,23 @@ def update_graph(pathname, indicators, std, periods):
             'y': adl['A/D'],
             'type': 'scatter',
             'mode': 'lines',
-            'name': 'Accumulation/Distribution Line',
-            'showlegend': False,
-            'line': {'color': '#F5A623'}
+            'name': 'A/D',
+            'legendgroup': 'A/D',
+            'line': {'color': '#332FD0'}
         }
-
         fig.add_trace(adl_trace, row=row_counter, col=1)
+
+        adl_trace = {
+            'x': dff['Date'],
+            'y': adl['Signal'],
+            'type': 'scatter',
+            'mode': 'lines',
+            'name': 'A/D Signal',
+            'legendgroup': 'A/D',
+            'line': {'color': '#E15FED'}
+        }
+        fig.add_trace(adl_trace, row=row_counter, col=1)
+
         fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
         fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
 
@@ -349,12 +398,13 @@ def update_graph(pathname, indicators, std, periods):
 
     fig.update_layout(
         margin={'b': 0, 'r': 10, 'l': 60, 't': 0},
-        legend={'x': 0, 'font': {'color': 'gray'}},
+        legend={'x': 0, 'font': {'color': 'gray'}, 'orientation': 'h'},
         plot_bgcolor='rgba(0, 0, 0, 0.0)',
         paper_bgcolor='rgba(0, 0, 0, 0.0)',
         xaxis={'showgrid': False, 'tickfont': {'color': 'gray'}},
         yaxis={'showgrid': False, 'tickfont': {'color': 'gray'}},
         height=subplots_height,
+        legend_y=1,
     )
 
     fig.update_annotations(font_color='gray')
