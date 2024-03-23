@@ -21,6 +21,10 @@
     backdrop-filter: blur(2px);
 }
 
+input.dash-input:invalid {
+    outline: solid #AF0404 !important;
+}
+
 @media only screen and (max-width: 768px) {
     .graph-section {
         flex-direction: column-reverse;

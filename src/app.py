@@ -82,6 +82,8 @@ app.layout = html.Div([
             dcc.Input(
                 id='std',
                 type='number',
+                min=1,
+                max=10,
                 placeholder='Std...',
                 style={
                     "color": "#fff", 
@@ -94,6 +96,8 @@ app.layout = html.Div([
             dcc.Input(
                 id='periods',
                 type='number',
+                min=2,
+                max=10,
                 placeholder='Periods...',
                 style={
                     "color": "#fff", 
@@ -425,8 +429,8 @@ def update_graph(pathname, indicators, std, periods):
                         label="YTD",
                         step="year",
                         stepmode="todate"),
-                    dict(count=1,
-                        label="1Y",
+                    dict(count=2,
+                        label="2Y",
                         step="year",
                         stepmode="backward"),
                     dict(label="ALL",
