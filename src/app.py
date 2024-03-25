@@ -456,38 +456,31 @@ def update_graph(pathname, indicators, std, periods):
 
 @app.callback(
     Output('stock-levels', 'children'),
-    Input('main-graph', 'hoverData'),
-    Input('url', 'pathname')
+    [Input('main-graph', 'hoverData'),
+     Input('url', 'pathname')],
+    prevent_initial_call=True
 )
 def update_stock_levels(hoverData, pathname):
     ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
     dff = df[df['Stock'] == ticker]
 
     if hoverData is None:
-        high = round(dff['High'].iloc[-1], 2)
-        low = round(dff['Low'].iloc[-1], 2)
-        open_price = round(dff['Open'].iloc[-1], 2)
-        close = round(dff['Close'].iloc[-1], 2)
+        latest_index = -1
+    else:
+        latest_index = hoverData['points'][0]['pointIndex']
 
-        stock_levels = [
-            html.Span([html.Span(letter), html.Span(f'{price}', style={'color': 'green' if price > dff[level].iloc[-2] else 'red'})], style={"display": "flex", "gap": "5px"})
-            for letter, level, price in [('O', 'Open', open_price), ('H', 'High', high), ('L', 'Low', low), ('C', 'Close', close)]
-        ]
-
-        return stock_levels
-
-    point_index = hoverData['points'][0]['pointIndex']
-    high = round(dff['High'].iloc[point_index], 2)
-    low = round(dff['Low'].iloc[point_index], 2)
-    open_price = round(dff['Open'].iloc[point_index], 2)
-    close = round(dff['Close'].iloc[point_index], 2)
+    high = round(dff['High'].iloc[latest_index], 2)
+    low = round(dff['Low'].iloc[latest_index], 2)
+    open_price = round(dff['Open'].iloc[latest_index], 2)
+    close = round(dff['Close'].iloc[latest_index], 2)
 
     stock_levels = [
-        html.Span([html.Span(letter), html.Span(f'{price}', style={'color': 'green' if price > dff[level].iloc[point_index - 1] else 'red'})], style={"display": "flex", "gap": "5px"})
+        html.Span([html.Span(letter), html.Span(f'{price}', style={'color': 'green' if price > dff[level].iloc[latest_index - 1] else 'red'})], style={"display": "flex", "gap": "5px"})
         for letter, level, price in [('O', 'Open', open_price), ('H', 'High', high), ('L', 'Low', low), ('C', 'Close', close)]
     ]
 
     return stock_levels
+
 
 stock_descriptions = {stock: list(description.values())[0] for stock, description in Stock_descriptions.items()}
 
