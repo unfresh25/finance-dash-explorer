@@ -190,7 +190,7 @@ app.layout = html.Div([
 
 def obv_ind(df):
     df['OBV'] = np.where(df['Close'] > df['Close'].shift(1), df['Volume'], np.where(df['Close'] < df['Close'].shift(1), -df['Volume'], 0)).cumsum()
-    df['OBV Signal'] = df['OBV'].ewm(span=12).mean()
+    df['OBV Signal'] = df['OBV'].ewm(span=9).mean()
 
     return df
 
@@ -220,7 +220,7 @@ def adl_ind(df):
 
 def bbands(price, window_size=10, num_of_std=5):
     rolling_mean = price.rolling(window=window_size).mean()
-    rolling_std  = price.rolling(window=window_size).std()
+    rolling_std = price.rolling(window=window_size).std()
     upper_band = rolling_mean + (rolling_std*num_of_std)
     lower_band = rolling_mean - (rolling_std*num_of_std)
     return rolling_mean, upper_band, lower_band
@@ -477,10 +477,10 @@ def update_stock_levels(hoverData, pathname):
         return stock_levels
 
     point_index = hoverData['points'][0]['pointIndex']
-    high = dff['High'].iloc[point_index]
-    low = dff['Low'].iloc[point_index]
-    open_price = dff['Open'].iloc[point_index]
-    close = dff['Close'].iloc[point_index]
+    high = round(dff['High'].iloc[point_index], 2)
+    low = round(dff['Low'].iloc[point_index], 2)
+    open_price = round(dff['Open'].iloc[point_index], 2)
+    close = round(dff['Close'].iloc[point_index], 2)
 
     stock_levels = [
         html.Span([html.Span(letter), html.Span(f'{price}', style={'color': 'green' if price > dff[level].iloc[point_index - 1] else 'red'})], style={"display": "flex", "gap": "5px"})
@@ -489,6 +489,7 @@ def update_stock_levels(hoverData, pathname):
 
     return stock_levels
 
+stock_descriptions = {stock: list(description.values())[0] for stock, description in Stock_descriptions.items()}
 
 @app.callback(
     Output('stock-name', 'children'),
@@ -498,18 +499,15 @@ def update_stock_levels(hoverData, pathname):
 )
 def update_stock_info(pathname):
     ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
-    description_dict = Stock_descriptions.get(ticker, {})
-    stock_name = next(iter(description_dict.keys()), "")
-    stock_description = next(iter(description_dict.values()), "")
-
-    dff = df[df['Stock'] == ticker]
-    dff = dff.sort_values(by='Date', ascending=True)
+    stock_name = ticker
+    stock_description = stock_descriptions.get(ticker, "")
     
-    stock_price = []
-
+    # Fetching stock price and date
+    dff = df[df['Stock'] == ticker]
     close = dff['Close'].iloc[-1]
     date = dff['Date'].iloc[-1]
 
+    stock_price = []
     stock_price_t = f'{close:,.2f}' if close is not None else ''
     stock_price_container = html.Div(
         [
@@ -531,8 +529,6 @@ def update_stock_info(pathname):
 
     return stock_name, stock_description, stock_price
 
-
-
 default_stock_table = [
     {'Stock': 'AAPL', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},
     {'Stock': 'GOOGL', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},
@@ -543,6 +539,11 @@ default_stock_table = [
 
 stock_table = default_stock_table
 
+closing_prices = {stock: df.loc[df['Stock'] == stock, 'Close'].iloc[-1] for stock in df['Stock'].unique()}
+previous_closes = {stock: df.loc[df['Stock'] == stock, 'Close'].iloc[-2] for stock in df['Stock'].unique()}
+chg_values = {stock: closing_prices[stock] - previous_closes[stock] for stock in df['Stock'].unique()}
+chg_percentages = {stock: (chg_values[stock] / previous_closes[stock]) * 100 for stock in df['Stock'].unique()}
+
 @app.callback(
     Output('stock-table', 'children'),
     Input('url', 'pathname')
@@ -552,9 +553,10 @@ def update_stock_table(pathname):
 
     if stock_table == default_stock_table:
         for i, stock_data in enumerate(default_stock_table):
-            stock_table[i]['Last'] = round(df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-1], 2)
-            stock_table[i]['Chg'] = round(df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-1] - df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-2], 2)
-            stock_table[i]['Chg%'] = round(((df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-1] - df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-2]) / df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-2]) * 100, 2)
+            stock = stock_data['Stock']
+            stock_table[i]['Last'] = round(closing_prices.get(stock, 0.0), 2)
+            stock_table[i]['Chg'] = round(chg_values.get(stock, 0.0), 2)
+            stock_table[i]['Chg%'] = round(chg_percentages.get(stock, 0.0), 2)
 
     stock_table_df = pd.DataFrame(stock_table)
 
@@ -564,7 +566,7 @@ def update_stock_table(pathname):
                 {'name': 'Stock', 'id': 'Stock', 'type': 'text'},
                 {'name': 'Last', 'id': 'Last', 'type': 'numeric'},
                 {'name': 'Chg', 'id': 'Chg', 'type': 'numeric'},
-                {'name': 'Chg%', 'id': 'Chg%', 'type': 'numeric'},
+                {'name': 'Chg%', 'id': 'Chg%', 'type': 'numeric'}
             ],
             data=stock_table_df.to_dict('records'),
             row_selectable=False,
