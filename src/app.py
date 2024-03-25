@@ -44,7 +44,7 @@ Stock_descriptions = {
     "COKE": {"Coca-Cola": "Publicly traded company (ticker symbol KO) with a top-down corporate structure that includes a chair and board, as well as a chief operating officer."},
     "GOOGL": {"Google Inc.": "American multinational technology company that specializes in Internet-related services and products, which include online advertising technologies, search engine, cloud computing, software, and hardware."},
     "TSLA": {"Tesla Inc.": "American manufacturer of electric automobiles, solar panels, and batteries for cars and home power storage."},
-    "YHOO": {"Yahoo!": "Global Internet brand and services provider based in Sunnyvale, California, and owned by Verizon Communications since 2017. It was founded in 1994 by Jerry Yang and David Filo, graduate students at Stanford University in California. Yahoo! provides users with online utilities, information, and access to other websites."}
+    "YHOO": {"Yahoo!": "Global Internet brand and services provider based in Sunnyvale, California, and owned by Verizon Communications since 2017. Yahoo! provides users with online utilities, information, and access to other websites."}
 }
 
 app.layout = html.Div([
@@ -302,8 +302,8 @@ def update_graph(pathname, indicators, std, periods):
         }
         fig.add_trace(obv_trace, row=row_counter, col=1)
 
-        fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
-        fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_xaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_yaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
 
         row_counter += 1
         subplots_height += 200
@@ -332,8 +332,8 @@ def update_graph(pathname, indicators, std, periods):
         }
         fig.add_trace(macd_trace, row=row_counter, col=1)
 
-        fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
-        fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_xaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_yaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
         
         row_counter += 1
         subplots_height += 200
@@ -364,8 +364,8 @@ def update_graph(pathname, indicators, std, periods):
         }
         fig.add_trace(so_trace, row=row_counter, col=1)
 
-        fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
-        fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_xaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_yaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
 
         row_counter += 1
         subplots_height += 200
@@ -394,8 +394,8 @@ def update_graph(pathname, indicators, std, periods):
         }
         fig.add_trace(adl_trace, row=row_counter, col=1)
 
-        fig.update_xaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
-        fig.update_yaxes(showgrid=False, row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_xaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
+        fig.update_yaxes(gridcolor='#111', row=row_counter, col=1, tickfont=dict(color='gray'))
 
         row_counter += 1
         subplots_height += 200
@@ -405,8 +405,8 @@ def update_graph(pathname, indicators, std, periods):
         legend={'x': 0, 'font': {'color': 'gray'}, 'orientation': 'h'},
         plot_bgcolor='rgba(0, 0, 0, 0.0)',
         paper_bgcolor='rgba(0, 0, 0, 0.0)',
-        xaxis={'showgrid': False, 'tickfont': {'color': 'gray'}},
-        yaxis={'showgrid': False, 'tickfont': {'color': 'gray'}},
+        xaxis={'gridcolor': '#111', 'tickfont': {'color': 'gray'}},
+        yaxis={'gridcolor': '#111', 'tickfont': {'color': 'gray'}},
         height=subplots_height,
         legend_y=1,
     )
@@ -552,7 +552,7 @@ def update_stock_table(pathname):
 
     if stock_table == default_stock_table:
         for i, stock_data in enumerate(default_stock_table):
-            stock_table[i]['Last'] = df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-1]
+            stock_table[i]['Last'] = round(df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-1], 2)
             stock_table[i]['Chg'] = round(df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-1] - df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-2], 2)
             stock_table[i]['Chg%'] = round(((df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-1] - df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-2]) / df.loc[df['Stock'] == stock_data['Stock'], 'Close'].iloc[-2]) * 100, 2)
 
