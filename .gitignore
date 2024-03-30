@@ -1,3 +1,6 @@
+# Folders
 finance_env/
 
+# Files
 .env
+test.py
