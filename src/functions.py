@@ -3,7 +3,6 @@ import yfinance as yf
 import pandas as pd
 import requests
 import os
-import base64
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -61,7 +60,7 @@ def get_stock_info(ticker):
     name = stock_info.get('shortName') or 'No name available'
     website = stock_info.get('website') or 'No website available'
 
-    max_length = 350
+    max_length = 250
     if len(description) > max_length:
         last_space_index = description.rfind(' ', 0, max_length)
         description = description[:last_space_index] + "..."
