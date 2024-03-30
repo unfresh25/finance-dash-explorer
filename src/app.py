@@ -1,4 +1,6 @@
+from datetime import datetime
 from dash import Dash, dcc, html, Input, Output, dash_table
+from dash.exceptions import PreventUpdate
 import colorlover as cl
 import pandas as pd
 import dash_bootstrap_components as dbc
@@ -60,12 +62,19 @@ app.layout = html.Div([
 
     html.Section([
         html.Aside([
-            dcc.Dropdown(
-                id='stock-selector',  # Identificador del componente
-                options=[{'label': stock, 'value': stock} for stock in get_most_active_stocks()],  # Obtener las opciones de get_most_active_stocks()
-                placeholder="Select a stock",  # Texto de marcador de posición
-                style={'width': '100%'}  # Estilo del componente
+            dcc.Input(
+                type='text',
+                id=dict(type = 'searchStock', id = 'stock-opt'),
+                placeholder = 'Search an stock...',
+                value = 'AAPL',
+                persistence = False, 
+                autoComplete = 'off',
+                list = 'suggestions-list',
+                style={"width": "100%", "color": "#007eff", "background-color": "transparent", "border": "none", "border-bottom": "1px solid #5f5f5f"}
             ),
+            html.Datalist(
+                id = 'suggestions-list',
+            )
         ], style={"width": "35%"}, className="technical-aside"),
 
         html.Aside([
@@ -161,7 +170,9 @@ app.layout = html.Div([
                         ], style={"display": "flex", "justify-content": "space-between", "align-items": "flex-end"}),                        
 
                         html.A(
-                            id='stock-website', 
+                            id='stock-website',
+                            rel="noopener noreferrer",
+                            target="_blank",
                             style={
                                 "display": "flex", 
                                 "align-items": "center", 
@@ -174,7 +185,7 @@ app.layout = html.Div([
                             className='stock-website'
                         ),
 
-                        html.P(id="stock-description"),
+                        html.P(id="stock-description", style={"font-size": "15px"}),
 
                         html.Div(id="stock-price", style={"display": "flex", "flex-direction": "column"})
                     ], style={
@@ -218,10 +229,19 @@ app.layout = html.Div([
         html.Img(src="https://www.uninorte.edu.co/o/uninorte-theme/images/uninorte/footer_un/logo.png", style={"height": "50px"})
     ], style={"display": "flex", "justify-content": "space-between", "align-items": "center"}),
 
-    html.Br()  
+    html.Br()
 ], style={"height": "100vh", "margin": "0 auto", "padding": "50px", "width": "90%"}, className="body-section")
 
+@app.callback(
+    Output('suggestions-list', 'children'),
+    Input({'id': 'stock-opt', 'type': 'searchStock'}, 'value'),
+    prevent_initial_call = True
+)
+def suggest_stocks(typing):
+    all_stocks = get_most_active_stocks()
+    filtered_stocks = [stock for stock in all_stocks if typing.lower() in stock.lower()]
 
+    return [html.Option(value=stock) for stock in filtered_stocks]
 
 @app.callback(
     Output('main-graph','figure'),
@@ -505,7 +525,8 @@ def update_stock_info(pathname):
 
     dff = get_stock_data(ticker)
     close = dff['Close'].iloc[-1]
-    date = dff.index[-1].date()
+    date = dff.index[-1]
+    date = datetime.strftime(date, '%Y-%m-%d %H:%M:%S') + ' UTC-4'
 
     stock_price = []
     stock_price_t = f'{close:,.2f}' if close is not None else ''
@@ -520,10 +541,9 @@ def update_stock_info(pathname):
     stock_price.append(html.Div(
         [
             html.Span("• Market Closed", style={"margin-top": "-15px"}),
-            " | ",
-            html.Span(date)
+            html.Span(f'({date})')
         ],
-        style={"display": "flex", "align-items": "flex-end", "gap": "5px", "margin-top": "-15px"}
+        style={"display": "flex", "align-items": "flex-end", "gap": "5px", "margin-top": "-15px", "font-size": "12px"}
         )
     )
 
