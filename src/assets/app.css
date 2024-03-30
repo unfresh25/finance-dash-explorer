@@ -25,6 +25,14 @@ input.dash-input:invalid {
     outline: solid #AF0404 !important;
 }
 
+.stock-website:hover > h3 {
+    color: #007eff;
+}
+
+.stock-website:hover > Img {
+    filter: invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%) contrast(104%);
+}
+
 @media only screen and (max-width: 768px) {
     .graph-section {
         flex-direction: column-reverse;
