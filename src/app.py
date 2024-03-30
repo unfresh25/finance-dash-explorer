@@ -4,6 +4,8 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 import numpy as np
 from plotly.subplots import make_subplots
+from functions import adl_ind, bbands, get_stock_info, macd_ind, obv_ind, stoch_ind, get_stock_data, get_most_active_stocks, get_logo
+import plotly.graph_objects as go
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -25,7 +27,7 @@ df = df.sort_values(by=['Date'], ascending=True)
 Navigation_options = [
     dbc.NavLink(
         html.Article([
-            html.Img(src=app.get_asset_url(f'{page}.svg'), alt=page, style={'height': '25px'}),
+            html.Img(src=app.get_asset_url(f'{page}.svg'), alt=page, style={'height': '25px', 'filter': 'invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)'}),
             page
         ], style={
             "display": "flex", 
@@ -57,6 +59,15 @@ app.layout = html.Div([
     html.Hr(),  
 
     html.Section([
+        html.Aside([
+            dcc.Dropdown(
+                id='stock-selector',  # Identificador del componente
+                options=[{'label': stock, 'value': stock} for stock in get_most_active_stocks()],  # Obtener las opciones de get_most_active_stocks()
+                placeholder="Select a stock",  # Texto de marcador de posición
+                style={'width': '100%'}  # Estilo del componente
+            ),
+        ], style={"width": "35%"}, className="technical-aside"),
+
         html.Aside([
             dcc.Dropdown(
                 id='technical-indicators',
@@ -141,6 +152,7 @@ app.layout = html.Div([
             html.Article([
                 html.Div([
                     html.Div([
+                        html.Div(id="stock-logo", style={"height": "50px", "width": "50px"}),
                         html.H2(id="stock-name", style={"font-size": "20px"}),
                         html.P(id="stock-description"),
                         html.Div(id="stock-price", style={"display": "flex", "flex-direction": "column"})
@@ -188,42 +200,7 @@ app.layout = html.Div([
     html.Br()  
 ], style={"height": "100vh", "margin": "0 auto", "padding": "50px", "width": "90%"}, className="body-section")
 
-def obv_ind(df):
-    df['OBV'] = np.where(df['Close'] > df['Close'].shift(1), df['Volume'], np.where(df['Close'] < df['Close'].shift(1), -df['Volume'], 0)).cumsum()
-    df['OBV Signal'] = df['OBV'].ewm(span=9).mean()
 
-    return df
-
-def macd_ind(df):
-    df['EMA12'] = df['Close'].ewm(span=12, adjust=False).mean()
-    df['EMA26'] = df['Close'].ewm(span=26, adjust=False).mean()
-    df['MACD'] = df['EMA12'] - df['EMA26']
-    df['Signal'] = df['MACD'].ewm(span=9, adjust=False).mean()
-
-    return df
-
-def stoch_ind(df, window_size=5):
-    df['High-Low'] = df['High'] - df['Low']
-    df['%K'] = (df['Close'] - df['Low']) / df['High-Low'] * 100
-    df['%D'] = df['%K'].rolling(window=window_size).mean()
-    df['Signal'] = df['%K'].ewm(span=9).mean()
-
-    return df    
-
-def adl_ind(df):
-    df['MFM'] = ((df['Close'] - df['Low']) - (df['High'] - df['Close'])) / (df['High'] - df['Low'])
-    df['ADL'] = df['MFM'] * df['Volume']
-    df['A/D'] = df['ADL'].cumsum()
-    df['Signal'] = df['A/D'].ewm(span=9).mean()
-
-    return df
-
-def bbands(price, window_size=10, num_of_std=5):
-    rolling_mean = price.rolling(window=window_size).mean()
-    rolling_std = price.rolling(window=window_size).std()
-    upper_band = rolling_mean + (rolling_std*num_of_std)
-    lower_band = rolling_mean - (rolling_std*num_of_std)
-    return rolling_mean, upper_band, lower_band
 
 @app.callback(
     Output('main-graph','figure'),
@@ -235,7 +212,8 @@ def bbands(price, window_size=10, num_of_std=5):
 )
 def update_graph(pathname, indicators, std, periods):
     ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
-    dff = df[df['Stock'] == ticker]
+    #dff = df[df['Stock'] == ticker]
+    dff = get_stock_data(ticker) 
 
     row_heights = [0.4 / (len(indicators) + 1)] * (len(indicators) + 1)
 
@@ -245,7 +223,7 @@ def update_graph(pathname, indicators, std, periods):
     fig = make_subplots(rows=len(indicators) + 1, cols=1, shared_xaxes=True, row_heights=row_heights, vertical_spacing=0.03, subplot_titles=fig_titles)
 
     candlestick = {
-        'x': dff['Date'],
+        'x': dff.index,
         'open': dff['Open'],
         'high': dff['High'],
         'low': dff['Low'],
@@ -262,7 +240,7 @@ def update_graph(pathname, indicators, std, periods):
 
     bb_bands = bbands(dff.Close, num_of_std=5 if std == None else std, window_size=3 if periods == None else periods)
     bollinger_traces = [{        
-        'x': dff['Date'], 'y': y,
+        'x': dff.index, 'y': y,
         'type': 'scatter', 'mode': 'lines',
         'line': {'width': 1, 'color': colorscale[(i*2) % len(colorscale)]},
         'legendgroup': ticker,
@@ -281,7 +259,7 @@ def update_graph(pathname, indicators, std, periods):
     if 'OBV' in indicators:
         obv = obv_ind(dff)
         obv_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': obv['OBV'],
             'type': 'scatter',
             'mode': 'lines',
@@ -292,7 +270,7 @@ def update_graph(pathname, indicators, std, periods):
         fig.add_trace(obv_trace, row=row_counter, col=1)
 
         obv_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': obv['OBV Signal'],
             'type': 'scatter',
             'mode': 'lines',
@@ -311,7 +289,7 @@ def update_graph(pathname, indicators, std, periods):
     if 'MACD' in indicators:
         macd = macd_ind(dff)
         macd_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': macd['MACD'],
             'type': 'scatter',
             'mode': 'lines',
@@ -322,7 +300,7 @@ def update_graph(pathname, indicators, std, periods):
         fig.add_trace(macd_trace, row=row_counter, col=1)
 
         macd_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': macd['Signal'],
             'type': 'scatter',
             'mode': 'lines',
@@ -341,7 +319,7 @@ def update_graph(pathname, indicators, std, periods):
     if 'SO' in indicators:
         so = stoch_ind(dff, window_size=5 if periods == None else periods)
         so_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': so['%D'],
             'type': 'scatter',
             'mode': 'lines',
@@ -353,7 +331,7 @@ def update_graph(pathname, indicators, std, periods):
         fig.add_trace(so_trace, row=row_counter, col=1)
 
         so_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': so['Signal'],
             'type': 'scatter',
             'mode': 'lines',
@@ -373,7 +351,7 @@ def update_graph(pathname, indicators, std, periods):
     if 'A/D' in indicators:
         adl = adl_ind(dff)
         adl_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': adl['A/D'],
             'type': 'scatter',
             'mode': 'lines',
@@ -384,7 +362,7 @@ def update_graph(pathname, indicators, std, periods):
         fig.add_trace(adl_trace, row=row_counter, col=1)
 
         adl_trace = {
-            'x': dff['Date'],
+            'x': dff.index,
             'y': adl['Signal'],
             'type': 'scatter',
             'mode': 'lines',
@@ -462,7 +440,8 @@ def update_graph(pathname, indicators, std, periods):
 )
 def update_stock_levels(hoverData, pathname):
     ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
-    dff = df[df['Stock'] == ticker]
+    #dff = df[df['Stock'] == ticker]
+    dff = get_stock_data(ticker)
 
     if hoverData is None:
         latest_index = -1
@@ -485,6 +464,7 @@ def update_stock_levels(hoverData, pathname):
 stock_descriptions = {stock: list(description.values())[0] for stock, description in Stock_descriptions.items()}
 
 @app.callback(
+    Output('stock-logo', 'children'),
     Output('stock-name', 'children'),
     Output('stock-description', 'children'),
     Output('stock-price', 'children'),
@@ -492,13 +472,14 @@ stock_descriptions = {stock: list(description.values())[0] for stock, descriptio
 )
 def update_stock_info(pathname):
     ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
-    stock_name = ticker
-    stock_description = stock_descriptions.get(ticker, "")
-    
-    # Fetching stock price and date
-    dff = df[df['Stock'] == ticker]
+    stock_address, stock_description, stock_name, stock_website = get_stock_info(ticker)
+
+    stock_logo_filename = get_logo(ticker)
+    stock_logo = html.Img(src=f'assets/{stock_logo_filename}', style={"height": "25px", "filter": "invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)"})
+
+    dff = get_stock_data(ticker)
     close = dff['Close'].iloc[-1]
-    date = dff['Date'].iloc[-1]
+    date = dff.index[-1].date()
 
     stock_price = []
     stock_price_t = f'{close:,.2f}' if close is not None else ''
@@ -520,7 +501,7 @@ def update_stock_info(pathname):
         )
     )
 
-    return stock_name, stock_description, stock_price
+    return stock_logo, stock_name, stock_description, stock_price
 
 default_stock_table = [
     {'Stock': 'AAPL', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},
