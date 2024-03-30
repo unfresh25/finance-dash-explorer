@@ -152,9 +152,30 @@ app.layout = html.Div([
             html.Article([
                 html.Div([
                     html.Div([
-                        html.Div(id="stock-logo", style={"height": "50px", "width": "50px"}),
-                        html.H2(id="stock-name", style={"font-size": "20px"}),
+                        html.Div([
+                            html.Div([
+                                html.Div(id="stock-logo"),
+                                html.H4(id="stock-ticker", style={"font-size": "15px", "height": "15px", "margin": "0", "margin-top": "5px"})
+                            ], style={"display": "flex", "align-items": "center", "gap": "5px"}),
+                            html.Span(id = 'stock-address', style={"font-size": "12px"}),
+                        ], style={"display": "flex", "justify-content": "space-between", "align-items": "flex-end"}),                        
+
+                        html.A(
+                            id='stock-website', 
+                            style={
+                                "display": "flex", 
+                                "align-items": "center", 
+                                "margin-top": "10px", 
+                                "margin-bottom": "10px", 
+                                "text-decoration": "none", 
+                                "max-width": "fit-content",
+                                "color": "#333"
+                            },
+                            className='stock-website'
+                        ),
+
                         html.P(id="stock-description"),
+
                         html.Div(id="stock-price", style={"display": "flex", "flex-direction": "column"})
                     ], style={
                         "width": "100%",
@@ -465,17 +486,22 @@ stock_descriptions = {stock: list(description.values())[0] for stock, descriptio
 
 @app.callback(
     Output('stock-logo', 'children'),
-    Output('stock-name', 'children'),
+    Output('stock-ticker', 'children'),
+    Output('stock-address', 'children'),
+    Output('stock-website', 'children'),
+    Output('stock-website', 'href'),
     Output('stock-description', 'children'),
     Output('stock-price', 'children'),
     Input('url', 'pathname')
 )
 def update_stock_info(pathname):
     ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
-    stock_address, stock_description, stock_name, stock_website = get_stock_info(ticker)
+    stock_address, stock_description, stock_name, stock_website_link = get_stock_info(ticker)
 
     stock_logo_filename = get_logo(ticker)
-    stock_logo = html.Img(src=f'assets/{stock_logo_filename}', style={"height": "25px", "filter": "invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)"})
+    stock_logo = html.Img(src=f'assets/{stock_logo_filename}', style={"height": "20px", "filter": "invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)"})
+
+    stock_website = [html.H3(stock_name, style={"font-size": "12px", "margin": "0"}), html.Img(src='assets/redirect.svg', style={"height": "12px"})]
 
     dff = get_stock_data(ticker)
     close = dff['Close'].iloc[-1]
@@ -501,7 +527,7 @@ def update_stock_info(pathname):
         )
     )
 
-    return stock_logo, stock_name, stock_description, stock_price
+    return stock_logo, ticker, stock_address, stock_website, stock_website_link, stock_description, stock_price
 
 default_stock_table = [
     {'Stock': 'AAPL', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},

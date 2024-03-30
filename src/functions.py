@@ -56,9 +56,9 @@ def get_stock_info(ticker):
     stock = yf.Ticker(ticker)
     stock_info = stock.info
 
-    address = stock_info.get('city') + ', ' + stock_info.get('state') + ', ' + stock_info.get('country') + '.' if stock_info.get('city') and stock_info.get('state') and stock_info.get('country') else 'No address available'
+    address = stock_info.get('city') + ', ' + stock_info.get('state') + '.' if stock_info.get('city') and stock_info.get('state') else 'No address available'
     description = stock_info.get('longBusinessSummary') or 'No description available'
-    name = stock_info.get('longName') or 'No name available'
+    name = stock_info.get('shortName') or 'No name available'
     website = stock_info.get('website') or 'No website available'
 
     max_length = 350
