@@ -536,7 +536,9 @@ def update_stock_info(stock_search):
     dff = get_stock_data(ticker)
     close = dff['Close'].iloc[-1]
     date = dff.index[-1]
-    date = datetime.strftime(date, '%Y-%m-%d %H:%M:%S') + ' UTC-4'
+    formatted_date = datetime.strftime(date, '%b %d')  # Format month name and day
+    date_month_day = pd.to_datetime(formatted_date, format='%b %d')
+    date = date_month_day.strftime('%b %d') + ' ' + date.strftime('%H:%M') + ' UTC-4'
 
     stock_price = []
     stock_price_t = f'{close:,.2f}' if close is not None else ''
