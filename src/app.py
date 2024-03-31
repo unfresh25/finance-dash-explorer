@@ -556,7 +556,7 @@ def update_stock_info(stock_search):
     dff = get_stock_data(ticker)
     close = dff['Close'].iloc[-1]
     date = dff.index[-1]
-    formatted_date = datetime.strftime(date, '%b %d')  # Format month name and day
+    formatted_date = datetime.strftime(date, '%b %d')
     date_month_day = pd.to_datetime(formatted_date, format='%b %d')
     date = date_month_day.strftime('%b %d') + ' ' + date.strftime('%H:%M') + ' UTC-4'
 
@@ -583,5 +583,4 @@ def update_stock_info(stock_search):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-    #app.run_server(debug=True, host='0.0.0.0', port=5000)
 
