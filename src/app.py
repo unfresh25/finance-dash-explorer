@@ -448,8 +448,8 @@ def update_graph(stock_search, indicators, std, periods):
         xaxis=dict(
             rangeselector=dict(
                 buttons=[
-                    dict(count=1,
-                        label="1M",
+                    dict(count=3,
+                        label="3M",
                         step="month",
                         stepmode="backward"),
                     dict(count=6,
@@ -457,9 +457,9 @@ def update_graph(stock_search, indicators, std, periods):
                         step="month",
                         stepmode="backward"),
                     dict(count=1,
-                        label="YTD",
+                        label="1Y",
                         step="year",
-                        stepmode="todate"),
+                        stepmode="backward"),
                     dict(count=2,
                         label="2Y",
                         step="year",
