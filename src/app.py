@@ -26,22 +26,22 @@ colorscale = cl.scales['9']['qual']['Paired']
 df = pd.read_csv('https://raw.githubusercontent.com/lihkir/Uninorte/main/AppliedStatisticMS/DataVisualizationRPython/Lectures/Python/PythonDataSets/dash-stock-ticker-demo.csv')
 df = df.sort_values(by=['Date'], ascending=True)
 
-Navigation_options = [
-    dbc.NavLink(
-        html.Article([
-            html.Img(src=app.get_asset_url(f'{page}.svg'), alt=page, style={'height': '25px', 'filter': 'invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)'}),
-            page
-        ], style={
-            "display": "flex", 
-            "align-items": "center",
-            "justify-content": "center",
-            "gap": "10px",
-        }
-        ), 
-        href=f'/{"" if page == "AAPL" else page}', 
-        active="exact"
-    ) for page in df.Stock.unique()
-]
+# Navigation_options = [
+#     dbc.NavLink(
+#         html.Article([
+#             html.Img(src=app.get_asset_url(f'{page}.svg'), alt=page, style={'height': '25px', 'filter': 'invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)'}),
+#             page
+#         ], style={
+#             "display": "flex", 
+#             "align-items": "center",
+#             "justify-content": "center",
+#             "gap": "10px",
+#         }
+#         ), 
+#         href=f'/{"" if page == "AAPL" else page}', 
+#         active="exact"
+#     ) for page in df.Stock.unique()
+# ]
 
 Stock_descriptions = {
     "AAPL": {"Apple Inc.": "American manufacturer of personal computers, smartphones, tablet computers, computer peripherals, and computer software and one of the most recognizable brands in the world."},
@@ -52,32 +52,36 @@ Stock_descriptions = {
 }
 
 app.layout = html.Div([
-    dcc.Location(id='url'),
+    #dcc.Location(id='url'),
 
-    html.H1("Dashboard Stock Explorer", style={"margin-bottom": "15px", "font-size": "25px", "text-align": "center"}),
+    #html.H1("Dashboard Stock Explorer", style={"margin-bottom": "15px", "font-size": "25px", "text-align": "center"}),
 
-    dbc.Nav(Navigation_options, vertical=False, pills=True, style={"justify-content": "flex-start", "gap": "35px"}),
+    #dbc.Nav(Navigation_options, vertical=False, pills=True, style={"justify-content": "flex-start", "gap": "35px"}),
 
-    html.Hr(),  
-
-    html.Section([
+    html.Nav([
         html.Aside([
-            dcc.Input(
-                type='text',
-                id=dict(type = 'searchStock', id = 'stock-opt'),
-                placeholder = 'Search an stock...',
-                value = 'AAPL',
-                persistence = False, 
-                autoComplete = 'off',
-                list = 'suggestions-list',
-                style={"width": "100%", "color": "#007eff", "background-color": "transparent", "border": "none", "border-bottom": "1px solid #5f5f5f"}
-            ),
+            html.Span([
+                html.Img(src=app.get_asset_url('icons/search.svg'), alt='Search', style={'height': '20px', 'filter': 'invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%) contrast(104%)'}),
+                dcc.Input(
+                    type='text',
+                    id=dict(type = 'searchStock', id = 'stock-opt'),
+                    placeholder = 'Search an stock...',
+                    value = 'AAPL',
+                    persistence = False, 
+                    autoComplete = 'off',
+                    list = 'suggestions-list',
+                    style={"width": "100%", "color": "#007eff", "background-color": "transparent", "border": "none"}
+                ),
+            ], style={'display': 'flex', 'align-items': 'center'}),
             html.Datalist(
                 id = 'suggestions-list',
             )
-        ], style={"width": "35%"}, className="technical-aside"),
+        ], style={"width": "120px", 'border-right': '1px solid #5f5f5f'}, className="technical-aside"),
 
         html.Aside([
+            html.Label([
+                html.Img(src=app.get_asset_url('icons/indicators.svg'), alt='Technical indicators', style={'height': '30px', 'filter': 'invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%'})
+            ]),
             dcc.Dropdown(
                 id='technical-indicators',
                 options=[
@@ -92,12 +96,15 @@ app.layout = html.Div([
                     "color": "black", 
                     "background-color": "transparent", 
                     "border": "none", 
-                    "border-bottom": "1px solid #5f5f5f",
                 },
                 placeholder="Select technical indicators..."
             ),
-        ], style={"width": "35%"}, className="technical-aside"),
+        ], style={"max-width": "50%", "display": "flex", "align-items": "center"}, className="technical-aside"),
+    ], style={'display': 'flex', "justify-content": "flex-start", "align-items": "center", 'gap': '15px'}),
 
+    html.Hr(),  
+
+    html.Section([
         html.Aside([
             dcc.Input(
                 id='std',
@@ -246,14 +253,14 @@ def suggest_stocks(typing):
 @app.callback(
     Output('main-graph','figure'),
     Output('main-graph-article', 'style'),
-    Input('url', 'pathname'),
+    Input({'id': 'stock-opt', 'type': 'searchStock'}, 'value'),
     Input('technical-indicators', 'value'),
     Input('std', 'value'),
     Input('periods', 'value')
 )
-def update_graph(pathname, indicators, std, periods):
-    ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
-    #dff = df[df['Stock'] == ticker]
+def update_graph(stock_search, indicators, std, periods):
+    stock_search = stock_search.upper() if stock_search else 'AAPL'
+    ticker = stock_search
     dff = get_stock_data(ticker) 
 
     row_heights = [0.4 / (len(indicators) + 1)] * (len(indicators) + 1)
@@ -472,16 +479,14 @@ def update_graph(pathname, indicators, std, periods):
 
     return fig, graph_style
 
-
 @app.callback(
     Output('stock-levels', 'children'),
-    [Input('main-graph', 'hoverData'),
-     Input('url', 'pathname')],
-    prevent_initial_call=True
+    Input('main-graph', 'hoverData'),
+    Input({'id': 'stock-opt', 'type': 'searchStock'}, 'value')
 )
-def update_stock_levels(hoverData, pathname):
-    ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
-    #dff = df[df['Stock'] == ticker]
+def update_stock_levels(hoverData, stock_search):
+    stock_search = stock_search.upper() if stock_search else 'AAPL'
+    ticker = stock_search
     dff = get_stock_data(ticker)
 
     if hoverData is None:
@@ -501,7 +506,6 @@ def update_stock_levels(hoverData, pathname):
 
     return stock_levels
 
-
 stock_descriptions = {stock: list(description.values())[0] for stock, description in Stock_descriptions.items()}
 
 @app.callback(
@@ -512,10 +516,11 @@ stock_descriptions = {stock: list(description.values())[0] for stock, descriptio
     Output('stock-website', 'href'),
     Output('stock-description', 'children'),
     Output('stock-price', 'children'),
-    Input('url', 'pathname')
+    Input({'id': 'stock-opt', 'type': 'searchStock'}, 'value')
 )
-def update_stock_info(pathname):
-    ticker = "AAPL" if pathname.lstrip('/') == "" else pathname.lstrip('/')
+def update_stock_info(stock_search):
+    stock_search = stock_search.upper() if stock_search else 'AAPL'
+    ticker = stock_search
     stock_address, stock_description, stock_name, stock_website_link = get_stock_info(ticker)
 
     stock_logo_filename = get_logo(ticker)
@@ -566,9 +571,9 @@ chg_percentages = {stock: (chg_values[stock] / previous_closes[stock]) * 100 for
 
 @app.callback(
     Output('stock-table', 'children'),
-    Input('url', 'pathname')
+    Input({'id': 'stock-opt', 'type': 'searchStock'}, 'value'),
 )
-def update_stock_table(pathname):
+def update_stock_table(stock_search):
     global stock_table
 
     if stock_table == default_stock_table:

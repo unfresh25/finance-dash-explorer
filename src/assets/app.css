@@ -33,6 +33,10 @@ input.dash-input:invalid {
     filter: invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%) contrast(104%);
 }
 
+.Select-clear-zone {
+    display: none !important;
+}
+
 @media only screen and (max-width: 768px) {
     .graph-section {
         flex-direction: column-reverse;

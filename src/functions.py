@@ -73,7 +73,7 @@ def get_most_active_stocks():
     
 def get_logo(ticker):
     filename = f'{ticker}.svg'
-    filepath = os.path.join('assets', filename)
+    filepath = os.path.join('assets/stocks', filename)
     
     if os.path.exists(filepath):
         return filename
