@@ -88,7 +88,11 @@ def get_cached_stock_info(ticker):
 
 def get_most_active_stocks():
     df = pd.read_html("https://finance.yahoo.com/most-active?offset=0&count=100")
-    return df[0]['Symbol']
+    return df[0]
+
+@lru_cache(maxsize=32)
+def get_cached_most_active_stocks():
+    return get_most_active_stocks()
     
 def get_logo(ticker):
     try:

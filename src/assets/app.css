@@ -38,6 +38,22 @@ input.dash-input:invalid {
     display: none !important;
 }
 
+.first-page, .previous-page, .next-page, .last-page{
+    background-color: transparent;
+}
+
+.first-page, .previous-page, .next-page, .last-page > svg{
+    filter: invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%) contrast(104%);
+}
+
+.page-number, .current-page-shadow {
+    color: #007eff !important;
+}
+
+.current-page-shadow {
+    border-bottom: none !important;
+}
+
 @media only screen and (max-width: 768px) {
     .graph-section {
         flex-direction: column-reverse;

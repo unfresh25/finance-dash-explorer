@@ -6,7 +6,7 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 import numpy as np
 from plotly.subplots import make_subplots
-from functions import adl_ind, bbands, get_cached_logo, get_cached_stock_data, get_cached_stock_info, get_stock_info, macd_ind, obv_ind, stoch_ind, get_stock_data, get_most_active_stocks, get_logo
+from functions import adl_ind, bbands, get_cached_logo, get_cached_most_active_stocks, get_cached_stock_data, get_cached_stock_info, get_stock_info, macd_ind, obv_ind, stoch_ind, get_stock_data, get_most_active_stocks, get_logo
 import plotly.graph_objects as go
 
 import warnings
@@ -26,38 +26,18 @@ colorscale = cl.scales['9']['qual']['Paired']
 df = pd.read_csv('https://raw.githubusercontent.com/lihkir/Uninorte/main/AppliedStatisticMS/DataVisualizationRPython/Lectures/Python/PythonDataSets/dash-stock-ticker-demo.csv')
 df = df.sort_values(by=['Date'], ascending=True)
 
-# Navigation_options = [
-#     dbc.NavLink(
-#         html.Article([
-#             html.Img(src=app.get_asset_url(f'{page}.svg'), alt=page, style={'height': '25px', 'filter': 'invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)'}),
-#             page
-#         ], style={
-#             "display": "flex", 
-#             "align-items": "center",
-#             "justify-content": "center",
-#             "gap": "10px",
-#         }
-#         ), 
-#         href=f'/{"" if page == "AAPL" else page}', 
-#         active="exact"
-#     ) for page in df.Stock.unique()
-# ]
+stock_table_data = get_cached_most_active_stocks()
+stock_table_columns_to_keep = ['Symbol', 'Price (Intraday)', 'Change', '% Change']
+stock_table_data = stock_table_data[stock_table_columns_to_keep]
 
-Stock_descriptions = {
-    "AAPL": {"Apple Inc.": "American manufacturer of personal computers, smartphones, tablet computers, computer peripherals, and computer software and one of the most recognizable brands in the world."},
-    "COKE": {"Coca-Cola": "Publicly traded company (ticker symbol KO) with a top-down corporate structure that includes a chair and board, as well as a chief operating officer."},
-    "GOOGL": {"Google Inc.": "American multinational technology company that specializes in Internet-related services and products, which include online advertising technologies, search engine, cloud computing, software, and hardware."},
-    "TSLA": {"Tesla Inc.": "American manufacturer of electric automobiles, solar panels, and batteries for cars and home power storage."},
-    "YHOO": {"Yahoo!": "Global Internet brand and services provider based in Sunnyvale, California, and owned by Verizon Communications since 2017. Yahoo! provides users with online utilities, information, and access to other websites."}
-}
+stock_table_data = stock_table_data.rename(columns={
+    'Symbol': 'Stock',
+    'Price (Intraday)': 'Last',
+    'Change': 'Chg',
+    '% Change': 'Chg%'
+})
 
 app.layout = html.Div([
-    #dcc.Location(id='url'),
-
-    #html.H1("Dashboard Stock Explorer", style={"margin-bottom": "15px", "font-size": "25px", "text-align": "center"}),
-
-    #dbc.Nav(Navigation_options, vertical=False, pills=True, style={"justify-content": "flex-start", "gap": "35px"}),
-
     html.Nav([
         html.Span("EFINEX", style={'color': '#007eff', 'border-right': '1px solid #5f5f5f', 'height': '36px', 'display': 'flex', 'align-items': 'center', 'width': '70px'}),
         html.Aside([
@@ -212,9 +192,50 @@ app.layout = html.Div([
                         "margin-top": "10px",
                     }),
                 ], style={"height": "100%"}),
-                html.Div(
-                    id='stock-table',
-                    style={
+                html.Div([
+                    html.Span("Most Active Stocks Today", style={"font-size": "14px", "margin-bottom": "5px", "text-align": "center",}),
+                    dash_table.DataTable(
+                        columns=[
+                            {'name': 'Stock', 'id': 'Stock', 'type': 'text'},
+                            {'name': 'Last', 'id': 'Last', 'type': 'numeric'},
+                            {'name': 'Chg', 'id': 'Chg', 'type': 'numeric'},
+                            {'name': 'Chg%', 'id': 'Chg%', 'type': 'text'}
+                        ],
+                        data=stock_table_data.to_dict('records'),
+                        row_selectable=False,
+                        #sort_action='native',
+                        page_size=10,
+                        page_current=0,
+                        style_cell={
+                            "backgroundColor": "transparent",
+                            "color": "gray",
+                            "border": "none",
+                            "font-size": "16px",
+                        },
+                        style_data_conditional=[
+                            {
+                                "if": {"column_id": "Chg", "filter_query": "{Chg} < 0"},
+                                "color": "#FF1E1E",
+                            },
+                            {
+                                "if": {"column_id": "Chg%", "filter_query": "{Chg} < 0"},
+                                "color": "#FF1E1E",
+                            },
+                            {
+                                "if": {"column_id": "Chg", "filter_query": "{Chg} >= 0"},
+                                "color": "#16FF00",
+                            },
+                            {
+                                "if": {"column_id": "Chg%", "filter_query": "{Chg} >= 0"},
+                                "color": "#16FF00",
+                            },
+                            {
+                                "if": {"row_index": 0},
+                                "border-bottom": "1px solid rgba(0, 0, 0, 0.1)",
+                            },
+                        ],
+                    )
+                ], style={
                         "display": "flex",
                         "flex-direction": "column",
                         "justify-content": "center",
@@ -250,7 +271,8 @@ app.layout = html.Div([
     prevent_initial_call = True
 )
 def suggest_stocks(typing):
-    all_stocks = get_most_active_stocks()
+    all_stocks = get_cached_most_active_stocks()
+    all_stocks = all_stocks['Symbol']
     filtered_stocks = [stock for stock in all_stocks if typing.lower() in stock.lower()]
 
     return [html.Option(value=stock) for stock in filtered_stocks]
@@ -511,8 +533,6 @@ def update_stock_levels(hoverData, stock_search):
 
     return stock_levels
 
-stock_descriptions = {stock: list(description.values())[0] for stock, description in Stock_descriptions.items()}
-
 @app.callback(
     Output('stock-logo', 'children'),
     Output('stock-ticker', 'children'),
@@ -560,80 +580,6 @@ def update_stock_info(stock_search):
     )
 
     return stock_logo, ticker, stock_address, stock_website, stock_website_link, stock_description, stock_price
-
-default_stock_table = [
-    {'Stock': 'AAPL', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},
-    {'Stock': 'GOOGL', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},
-    {'Stock': 'YHOO', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},
-    {'Stock': 'TSLA', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0},
-    {'Stock': 'COKE', 'Last': 0.0, 'Chg': 0.0, 'Chg%': 0.0}
-]
-
-stock_table = default_stock_table
-
-closing_prices = {stock: df.loc[df['Stock'] == stock, 'Close'].iloc[-1] for stock in df['Stock'].unique()}
-previous_closes = {stock: df.loc[df['Stock'] == stock, 'Close'].iloc[-2] for stock in df['Stock'].unique()}
-chg_values = {stock: closing_prices[stock] - previous_closes[stock] for stock in df['Stock'].unique()}
-chg_percentages = {stock: (chg_values[stock] / previous_closes[stock]) * 100 for stock in df['Stock'].unique()}
-
-@app.callback(
-    Output('stock-table', 'children'),
-    Input({'id': 'stock-opt', 'type': 'searchStock'}, 'value'),
-)
-def update_stock_table(stock_search):
-    global stock_table
-
-    if stock_table == default_stock_table:
-        for i, stock_data in enumerate(default_stock_table):
-            stock = stock_data['Stock']
-            stock_table[i]['Last'] = round(closing_prices.get(stock, 0.0), 2)
-            stock_table[i]['Chg'] = round(chg_values.get(stock, 0.0), 2)
-            stock_table[i]['Chg%'] = round(chg_percentages.get(stock, 0.0), 2)
-
-    stock_table_df = pd.DataFrame(stock_table)
-
-    return [
-        dash_table.DataTable(
-            columns=[
-                {'name': 'Stock', 'id': 'Stock', 'type': 'text'},
-                {'name': 'Last', 'id': 'Last', 'type': 'numeric'},
-                {'name': 'Chg', 'id': 'Chg', 'type': 'numeric'},
-                {'name': 'Chg%', 'id': 'Chg%', 'type': 'numeric'}
-            ],
-            data=stock_table_df.to_dict('records'),
-            row_selectable=False,
-            sort_action='native',
-            style_cell={
-                "backgroundColor": "transparent",
-                "color": "gray",
-                "border": "none",
-                "font-size": "16px",
-            },
-            style_data_conditional=[
-                {
-                    "if": {"column_id": "Chg", "filter_query": "{Chg} < 0"},
-                    "color": "#FF1E1E",
-                },
-                {
-                    "if": {"column_id": "Chg%", "filter_query": "{Chg%} < 0"},
-                    "color": "#FF1E1E",
-                },
-                {
-                    "if": {"column_id": "Chg", "filter_query": "{Chg} >= 0"},
-                    "color": "#16FF00",
-                },
-                {
-                    "if": {"column_id": "Chg%", "filter_query": "{Chg%} >= 0"},
-                    "color": "#16FF00",
-                },
-                {
-                    "if": {"row_index": 0},
-                    "border-bottom": "1px solid rgba(0, 0, 0, 0.1)",
-                },
-            ],
-        )
-    ]
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
