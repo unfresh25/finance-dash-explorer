@@ -6,7 +6,7 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 import numpy as np
 from plotly.subplots import make_subplots
-from functions import adl_ind, bbands, get_stock_info, macd_ind, obv_ind, stoch_ind, get_stock_data, get_most_active_stocks, get_logo
+from functions import adl_ind, bbands, get_cached_logo, get_cached_stock_data, get_cached_stock_info, get_stock_info, macd_ind, obv_ind, stoch_ind, get_stock_data, get_most_active_stocks, get_logo
 import plotly.graph_objects as go
 
 import warnings
@@ -266,7 +266,7 @@ def suggest_stocks(typing):
 def update_graph(stock_search, indicators, std, periods):
     stock_search = stock_search.upper() if stock_search else 'AAPL'
     ticker = stock_search
-    dff = get_stock_data(ticker) 
+    dff = get_cached_stock_data(ticker) 
 
     row_heights = [0.4 / (len(indicators) + 1)] * (len(indicators) + 1)
 
@@ -492,7 +492,7 @@ def update_graph(stock_search, indicators, std, periods):
 def update_stock_levels(hoverData, stock_search):
     stock_search = stock_search.upper() if stock_search else 'AAPL'
     ticker = stock_search
-    dff = get_stock_data(ticker)
+    dff = get_cached_stock_data(ticker)
 
     if hoverData is None:
         latest_index = -1
@@ -526,9 +526,9 @@ stock_descriptions = {stock: list(description.values())[0] for stock, descriptio
 def update_stock_info(stock_search):
     stock_search = stock_search.upper() if stock_search else 'AAPL'
     ticker = stock_search
-    stock_address, stock_description, stock_name, stock_website_link = get_stock_info(ticker)
+    stock_address, stock_description, stock_name, stock_website_link = get_cached_stock_info(ticker)
 
-    stock_logo_filename = get_logo(ticker)
+    stock_logo_filename = get_cached_logo(ticker)
     stock_logo = html.Img(src=f'assets/stocks/{stock_logo_filename}', style={"height": "20px", "filter": "invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)"})
 
     stock_website = [html.H3(stock_name, style={"font-size": "12px", "margin": "0"}), html.Img(src='assets/icons/redirect.svg', style={"height": "12px"})]

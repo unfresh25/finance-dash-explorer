@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import os
 from dotenv import load_dotenv
+from functools import lru_cache
 
 load_dotenv()
 
@@ -55,6 +56,10 @@ def get_stock_data(ticker):
         print(f"Error al obtener la información del ticker {ticker}. {str(e)}")
         print("Obteniendo información de AAPL (Apple Inc.)...")
         return get_stock_data("AAPL")
+    
+@lru_cache(maxsize=32)
+def get_cached_stock_data(ticker):
+    return get_stock_data(ticker)
 
 def get_stock_info(ticker):
     try:
@@ -76,6 +81,10 @@ def get_stock_info(ticker):
         print(f"Error al obtener la información del ticker {ticker}. {str(e)}")
         print("Obteniendo información de AAPL (Apple Inc.)...")
         return get_stock_info("AAPL")
+    
+@lru_cache(maxsize=32)
+def get_cached_stock_info(ticker):
+    return get_stock_info(ticker)
 
 def get_most_active_stocks():
     df = pd.read_html("https://finance.yahoo.com/most-active?offset=0&count=100")
@@ -117,6 +126,10 @@ def get_logo(ticker):
         print(f"Error al obtener la información del ticker {ticker}. {str(e)}")
         print("Obteniendo información de AAPL (Apple Inc.)...")
         return get_logo("AAPL")
+    
+@lru_cache(maxsize=32)
+def get_cached_logo(ticker):
+    return get_logo(ticker)
 
 
     
