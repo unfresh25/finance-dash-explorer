@@ -59,6 +59,7 @@ app.layout = html.Div([
     #dbc.Nav(Navigation_options, vertical=False, pills=True, style={"justify-content": "flex-start", "gap": "35px"}),
 
     html.Nav([
+        html.Span("EFINEX", style={'color': '#007eff', 'border-right': '1px solid #5f5f5f', 'height': '36px', 'display': 'flex', 'align-items': 'center', 'width': '70px'}),
         html.Aside([
             html.Span([
                 html.Img(src=app.get_asset_url('icons/search.svg'), alt='Search', style={'height': '20px', 'filter': 'invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%) contrast(104%)'}),
@@ -76,7 +77,7 @@ app.layout = html.Div([
             html.Datalist(
                 id = 'suggestions-list',
             )
-        ], style={"width": "120px", 'border-right': '1px solid #5f5f5f'}, className="technical-aside"),
+        ], style={"width": "120px", 'border-right': '1px solid #5f5f5f', 'height': '36px', 'display': 'flex'}, className="technical-aside"),
 
         html.Aside([
             html.Label([
@@ -99,27 +100,34 @@ app.layout = html.Div([
                 },
                 placeholder="Select technical indicators..."
             ),
-        ], style={"max-width": "50%", "display": "flex", "align-items": "center"}, className="technical-aside"),
-    ], style={'display': 'flex', "justify-content": "flex-start", "align-items": "center", 'gap': '15px'}),
+        ], style={"min-width": "15%", "max-width": "50%", "display": "flex", "align-items": "center", 'border-right': '1px solid #5f5f5f'}, className="technical-aside"),
 
-    html.Hr(),  
-
-    html.Section([
         html.Aside([
-            dcc.Input(
-                id='std',
-                type='number',
-                min=1,
-                max=10,
-                placeholder='Std...',
-                style={
-                    "color": "#fff", 
-                    "background-color": "transparent", 
-                    "border": "none", 
-                    "border-bottom": "1px solid #5f5f5f",
-                    "width": "30%"
-                }
-            ),
+            html.Div([
+                html.Label([
+                    html.Img(src=app.get_asset_url('icons/deviation.svg'), alt='Technical indicators', style={'height': '25px', 'filter': 'invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%'})
+                ]),
+                dcc.Input(
+                    id='std',
+                    type='number',
+                    min=1,
+                    max=10,
+                    placeholder='Std...',
+                    style={
+                        "color": "#007eff", 
+                        "background-color": "transparent", 
+                        "border": "none", 
+                        "border-bottom": "0.5px solid #5f5f5f",
+                        "width": "50%"
+                    }
+                ),
+            ], style = {"display": "flex", "align-items": "center", "gap": "15px"}),
+        ], style={"width": "130px", 'border-right': '1px solid #5f5f5f', 'height': '36px', 'display': 'flex'}, className="technical-aside"),
+
+        html.Aside([
+            html.Label([
+                html.Img(src=app.get_asset_url('icons/periods.svg'), alt='Technical indicators', style={'height': '25px', 'filter': 'invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%'})
+            ]),
             dcc.Input(
                 id='periods',
                 type='number',
@@ -127,20 +135,17 @@ app.layout = html.Div([
                 max=10,
                 placeholder='Periods...',
                 style={
-                    "color": "#fff", 
+                    "color": "#007eff", 
                     "background-color": "transparent", 
                     "border": "none", 
                     "border-bottom": "1px solid #5f5f5f",
-                    "width": "30%"
+                    "width": "40%"
                 }
             )
-        ], style={"display": "flex", "gap": "15px"}),        
-    ], style={
-        "display": "flex", 
-        "justify-content": "flex-start", 
-        "align-items": "flex-end",
-        "gap": "15px"
-    }, className="dropdowns-section"),
+        ], style={"display": "flex", "gap": "15px"}),       
+    ], style={'display': 'flex', "justify-content": "flex-start", "align-items": "center", 'gap': '15px'}),
+
+    html.Hr(),  
 
     html.Section([
         html.Aside([        
@@ -500,7 +505,7 @@ def update_stock_levels(hoverData, stock_search):
     close = round(dff['Close'].iloc[latest_index], 2)
 
     stock_levels = [
-        html.Span([html.Span(letter), html.Span(f'{price}', style={'color': 'green' if price > dff[level].iloc[latest_index - 1] else 'red'})], style={"display": "flex", "gap": "5px"})
+        html.Span([html.Span(letter), html.Span(f'{price}', style={'color': '#16FF00' if price > dff[level].iloc[latest_index - 1] else '#FF1E1E'})], style={"display": "flex", "gap": "5px"})
         for letter, level, price in [('O', 'Open', open_price), ('H', 'High', high), ('L', 'Low', low), ('C', 'Close', close)]
     ]
 
@@ -524,9 +529,9 @@ def update_stock_info(stock_search):
     stock_address, stock_description, stock_name, stock_website_link = get_stock_info(ticker)
 
     stock_logo_filename = get_logo(ticker)
-    stock_logo = html.Img(src=f'assets/{stock_logo_filename}', style={"height": "20px", "filter": "invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)"})
+    stock_logo = html.Img(src=f'assets/stocks/{stock_logo_filename}', style={"height": "20px", "filter": "invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)"})
 
-    stock_website = [html.H3(stock_name, style={"font-size": "12px", "margin": "0"}), html.Img(src='assets/redirect.svg', style={"height": "12px"})]
+    stock_website = [html.H3(stock_name, style={"font-size": "12px", "margin": "0"}), html.Img(src='assets/icons/redirect.svg', style={"height": "12px"})]
 
     dff = get_stock_data(ticker)
     close = dff['Close'].iloc[-1]
@@ -605,19 +610,19 @@ def update_stock_table(stock_search):
             style_data_conditional=[
                 {
                     "if": {"column_id": "Chg", "filter_query": "{Chg} < 0"},
-                    "color": "red",
+                    "color": "#FF1E1E",
                 },
                 {
                     "if": {"column_id": "Chg%", "filter_query": "{Chg%} < 0"},
-                    "color": "red",
+                    "color": "#FF1E1E",
                 },
                 {
                     "if": {"column_id": "Chg", "filter_query": "{Chg} >= 0"},
-                    "color": "green",
+                    "color": "#16FF00",
                 },
                 {
                     "if": {"column_id": "Chg%", "filter_query": "{Chg%} >= 0"},
-                    "color": "green",
+                    "color": "#16FF00",
                 },
                 {
                     "if": {"row_index": 0},
