@@ -4,6 +4,7 @@ from dash import Dash, dcc, html, Input, Output, dash_table
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+import dash_loading_spinners as dls
 
 import colorlover as cl
 
@@ -132,16 +133,21 @@ app.layout = html.Div([
     html.Hr(),  
 
     html.Section([
-        html.Aside([        
-            html.Article([                
-                html.Div(id="stock-levels", style={"display": "flex", "gap": "5px", "margin-left": "2rem"}),
-                html.Div([                
-                    dcc.Graph(id='main-graph', style={"height": "95%"}),
-                ], style={"height": "95%", "margin-top": "10px"})
-            ], style={
-                "width": "100%",
-                "height": "95%",
-            }, id='main-graph-article')
+        html.Aside([
+            dls.Grid([
+                html.Article([                
+                    html.Div(id="stock-levels", style={"display": "flex", "gap": "5px", "margin-left": "2rem"}),
+                    html.Div([                
+                        dcc.Graph(id='main-graph', style={"height": "95%"}),
+                    ], style={"height": "95%", "margin-top": "10px"})
+                ], style={
+                    "width": "100%",
+                    "height": "95%",
+                }, id='main-graph-article')
+            ],
+            color='#fff',
+            speed_multiplier=2,
+            show_initially=True),
         ], style={
             "display": "flex",
             "flex-direction": "column",

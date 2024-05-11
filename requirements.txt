@@ -4,3 +4,5 @@ dash-bootstrap-components==1.5.0
 dash-tools==1.12.0
 gunicorn==21.2.0
 pandas==2.2.1
+dash-mantine-components
+dash-loading-spinners
