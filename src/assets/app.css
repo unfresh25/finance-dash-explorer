@@ -54,6 +54,21 @@ input.dash-input:invalid {
     border-bottom: none !important;
 }
 
+.mantine-MultiSelect-input {
+    background: transparent !important;
+    border: none;
+    padding: 0px;
+}
+
+.mantine-MultiSelect-defaultValue {
+    background: transparent !important;
+    color: #007eff;
+}
+
+.mantine-UnstyledButton-root > svg {
+    color: #007eff;
+}
+
 @media only screen and (max-width: 768px) {
     .graph-section {
         flex-direction: column-reverse;

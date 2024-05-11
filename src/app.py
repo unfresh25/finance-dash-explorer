@@ -1,13 +1,17 @@
 from datetime import datetime
+
 from dash import Dash, dcc, html, Input, Output, dash_table
 from dash.exceptions import PreventUpdate
-import colorlover as cl
-import pandas as pd
 import dash_bootstrap_components as dbc
-import numpy as np
+import dash_mantine_components as dmc
+
+import colorlover as cl
+
+import pandas as pd
+
 from plotly.subplots import make_subplots
-from functions import adl_ind, bbands, get_cached_logo, get_cached_most_active_stocks, get_cached_stock_data, get_cached_stock_info, get_stock_info, macd_ind, obv_ind, stoch_ind, get_stock_data, get_most_active_stocks, get_logo
-import plotly.graph_objects as go
+
+from functions import adl_ind, bbands, get_cached_most_active_stocks, get_cached_stock_data, get_cached_stock_info, macd_ind, obv_ind, stoch_ind, get_stock_data
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -63,16 +67,16 @@ app.layout = html.Div([
             html.Label([
                 html.Img(src=app.get_asset_url('icons/indicators.svg'), alt='Technical indicators', style={'height': '30px', 'filter': 'invert(38%) sepia(99%) saturate(4271%) hue-rotate(200deg) brightness(105%'})
             ]),
-            dcc.Dropdown(
+            dmc.MultiSelect(
                 id='technical-indicators',
-                options=[
+                data=[
                     {'label': 'OBV', 'value': 'OBV'},
                     {'label': 'MACD', 'value': 'MACD'},
                     {'label': 'SO', 'value': 'SO'},
                     {'label': 'A/D', 'value': 'A/D'}
                 ],
                 value=['OBV'],
-                multi=True,
+                maxSelectedValues=2,
                 style={
                     "color": "black", 
                     "background-color": "transparent", 
@@ -155,7 +159,6 @@ app.layout = html.Div([
                     html.Div([
                         html.Div([
                             html.Div([
-                                html.Div(id="stock-logo"),
                                 html.H4(id="stock-ticker", style={"font-size": "15px", "height": "15px", "margin": "0", "margin-top": "5px"})
                             ], style={"display": "flex", "align-items": "center", "gap": "5px"}),
                             html.Span(id = 'stock-address', style={"font-size": "12px"}),
@@ -256,8 +259,8 @@ app.layout = html.Div([
     html.Footer([
         html.Article([
             html.Span("Jorge Borja S."),
-            html.Span("Visualización Científica"),
-            html.Span("Maestría en Estadística Aplicada")
+            html.Span("Scientific Visualization"),
+            html.Span("Master's Degree in Applied Statistics")
         ], style={"display": "flex", "flex-direction": "column"}, className="footer-names"),
         html.Img(src="https://www.uninorte.edu.co/o/uninorte-theme/images/uninorte/footer_un/logo.png", style={"height": "50px"})
     ], style={"display": "flex", "justify-content": "space-between", "align-items": "center"}),
@@ -289,6 +292,9 @@ def update_graph(stock_search, indicators, std, periods):
     stock_search = stock_search.upper() if stock_search else 'AAPL'
     ticker = stock_search
     dff = get_cached_stock_data(ticker) 
+
+    if dff.empty:
+        raise PreventUpdate
 
     row_heights = [0.4 / (len(indicators) + 1)] * (len(indicators) + 1)
 
@@ -470,10 +476,6 @@ def update_graph(stock_search, indicators, std, periods):
         xaxis=dict(
             rangeselector=dict(
                 buttons=[
-                    dict(count=3,
-                        label="3M",
-                        step="month",
-                        stepmode="backward"),
                     dict(count=6,
                         label="6M",
                         step="month",
@@ -489,7 +491,9 @@ def update_graph(stock_search, indicators, std, periods):
                     dict(label="ALL",
                          step="all")
                 ]),
-            type="date"),
+            type="date"
+        ),
+        margin={'b': 30, 'r': 30, 'l': 30, 't': 30},
     )
 
     fig.update_xaxes(
@@ -516,6 +520,9 @@ def update_stock_levels(hoverData, stock_search):
     ticker = stock_search
     dff = get_cached_stock_data(ticker)
 
+    if dff.empty:
+        raise PreventUpdate
+
     if hoverData is None:
         latest_index = -1
     else:
@@ -534,7 +541,6 @@ def update_stock_levels(hoverData, stock_search):
     return stock_levels
 
 @app.callback(
-    Output('stock-logo', 'children'),
     Output('stock-ticker', 'children'),
     Output('stock-address', 'children'),
     Output('stock-website', 'children'),
@@ -544,42 +550,42 @@ def update_stock_levels(hoverData, stock_search):
     Input({'id': 'stock-opt', 'type': 'searchStock'}, 'value')
 )
 def update_stock_info(stock_search):
-    stock_search = stock_search.upper() if stock_search else 'AAPL'
-    ticker = stock_search
-    stock_address, stock_description, stock_name, stock_website_link = get_cached_stock_info(ticker)
+    try:
+        stock_search = stock_search.upper() if stock_search else 'AAPL'
+        ticker = stock_search
+        stock_address, stock_description, stock_name, stock_website_link = get_cached_stock_info(ticker)
 
-    stock_logo_filename = get_cached_logo(ticker)
-    stock_logo = html.Img(src=f'assets/stocks/{stock_logo_filename}', style={"height": "20px", "filter": "invert(100%) sepia(0%) saturate(17%) hue-rotate(337deg) brightness(106%) contrast(104%)"})
+        stock_website = [html.H3(stock_name, style={"font-size": "12px", "margin": "0"}), html.Img(src='assets/icons/redirect.svg', style={"height": "12px"})]
 
-    stock_website = [html.H3(stock_name, style={"font-size": "12px", "margin": "0"}), html.Img(src='assets/icons/redirect.svg', style={"height": "12px"})]
+        dff = get_stock_data(ticker)
+        close = dff['Close'].iloc[-1]
+        date = dff.index[-1]
+        formatted_date = datetime.strftime(date, '%b %d')
+        date_month_day = pd.to_datetime(formatted_date, format='%b %d')
+        date = date_month_day.strftime('%b %d') + ' ' + date.strftime('%H:%M') + ' UTC-4'
 
-    dff = get_stock_data(ticker)
-    close = dff['Close'].iloc[-1]
-    date = dff.index[-1]
-    formatted_date = datetime.strftime(date, '%b %d')
-    date_month_day = pd.to_datetime(formatted_date, format='%b %d')
-    date = date_month_day.strftime('%b %d') + ' ' + date.strftime('%H:%M') + ' UTC-4'
-
-    stock_price = []
-    stock_price_t = f'{close:,.2f}' if close is not None else ''
-    stock_price_container = html.Div(
-        [
-            html.Span(html.H3(stock_price_t, style={"color": "#fff"})),
-            html.P("USD")
-        ],
-        style={"display": "flex", "align-items": "flex-end", "gap": "5px"}
-    )
-    stock_price.append(stock_price_container)
-    stock_price.append(html.Div(
-        [
-            html.Span("• Market Closed", style={"margin-top": "-15px"}),
-            html.Span(f'({date})')
-        ],
-        style={"display": "flex", "align-items": "flex-end", "gap": "5px", "margin-top": "-15px", "font-size": "12px"}
+        stock_price = []
+        stock_price_t = f'{close:,.2f}' if close is not None else ''
+        stock_price_container = html.Div(
+            [
+                html.Span(html.H3(stock_price_t, style={"color": "#fff"})),
+                html.P("USD")
+            ],
+            style={"display": "flex", "align-items": "flex-end", "gap": "5px"}
         )
-    )
+        stock_price.append(stock_price_container)
+        stock_price.append(html.Div(
+            [
+                html.Span("• Market Closed", style={"margin-top": "-15px"}),
+                html.Span(f'({date})')
+            ],
+            style={"display": "flex", "align-items": "flex-end", "gap": "5px", "margin-top": "-15px", "font-size": "12px"}
+            )
+        )
 
-    return stock_logo, ticker, stock_address, stock_website, stock_website_link, stock_description, stock_price
+        return ticker, stock_address, stock_website, stock_website_link, stock_description, stock_price
+    except:
+        raise PreventUpdate
 
 if __name__ == '__main__':
     app.run_server(debug=True)

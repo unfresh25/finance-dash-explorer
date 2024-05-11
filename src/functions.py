@@ -1,7 +1,8 @@
 import numpy as np
 import yfinance as yf
+
 import pandas as pd
-import requests
+
 import os
 from dotenv import load_dotenv
 from functools import lru_cache
@@ -94,46 +95,46 @@ def get_most_active_stocks():
 def get_cached_most_active_stocks():
     return get_most_active_stocks()
     
-def get_logo(ticker):
-    try:
-        filename = f'{ticker}.svg'
-        filepath = os.path.join('assets/stocks', filename)
+# def get_logo(ticker):
+#     try:
+#         filename = f'{ticker}.svg'
+#         filepath = 'assets/stocks/' + filename
 
-        if os.path.exists(filepath):
-            return filename
+#         if os.path.exists(filepath):
+#             return filename
 
-        url = f"https://api.polygon.io/v3/reference/tickers/{ticker}?apiKey={API_KEY}"
-        response = requests.get(url)
+#         url = f"https://api.polygon.io/v3/reference/tickers/{ticker}?apiKey={API_KEY}"
+#         response = requests.get(url)
 
-        if response.status_code == 200:
-            res = response.json()
-            logo_url = res.get('results').get('branding').get('logo_url')
+#         if response.status_code == 200:
+#             res = response.json()
+#             logo_url = res.get('results').get('branding').get('logo_url')
             
-            payload = {}
-            headers = {
-                'Authorization': 'Bearer ' + API_KEY
-            }
+#             payload = {}
+#             headers = {
+#                 'Authorization': 'Bearer ' + API_KEY
+#             }
             
-            response = requests.request("GET", logo_url, headers=headers, data=payload)
+#             response = requests.request("GET", logo_url, headers=headers, data=payload)
             
-            if response.status_code == 200:
-                with open(filepath, 'wb') as f:
-                    f.write(response.content)
-                return filename
-            else:
-                print(f"Error al obtener el logo del ticker {ticker}. Código de estado: {response.status_code}")
-                return None
-        else:
-            print(f"Error al obtener la información del ticker {ticker}. Código de estado: {response.status_code}")
-            return None
-    except Exception as e:
-        print(f"Error al obtener la información del ticker {ticker}. {str(e)}")
-        print("Obteniendo información de AAPL (Apple Inc.)...")
-        return get_logo("AAPL")
+#             if response.status_code == 200:
+#                 with open(filepath, 'wb') as f:
+#                     f.write(response.content)
+#                 return filename
+#             else:
+#                 print(f"Error al obtener el logo del ticker {ticker}. Código de estado: {response.status_code}")
+#                 return None
+#         else:
+#             print(f"Error al obtener la información del ticker {ticker}. Código de estado: {response.status_code}")
+#             return None
+#     except Exception as e:
+#         print(f"Error al obtener la información del ticker {ticker}. {str(e)}")
+#         print("Obteniendo información de AAPL (Apple Inc.)...")
+#         return get_logo("AAPL")
     
-@lru_cache(maxsize=32)
-def get_cached_logo(ticker):
-    return get_logo(ticker)
+# @lru_cache(maxsize=32)
+# def get_cached_logo(ticker):
+#     return get_logo(ticker)
 
 
     
