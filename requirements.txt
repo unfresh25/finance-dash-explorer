@@ -7,3 +7,4 @@ pandas==2.2.1
 dash-mantine-components
 dash-loading-spinners
 yfinance
+python-dotenv
