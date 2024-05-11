@@ -6,3 +6,4 @@ gunicorn==21.2.0
 pandas==2.2.1
 dash-mantine-components
 dash-loading-spinners
+yfinance
